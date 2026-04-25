@@ -973,18 +973,16 @@ module MADAM_SE
 		.READY(UNPACKER_B_READY)
 	);
 	
-	wire [15: 0] PIN_A = UNPACKER_A_OUT;//524
+	wire [15: 0] PIN_A = UNPACKER_A_OUT;
 	wire [15: 0] PIN_B = UNPACKER_B_OUT;
 	wire         TRANSPARENT = UNPACKER_A_T;
 	wire         TRANSPARENT_B = UNPACKER_B_T;
 	
 	//IPS
-	bit          IPS_A_EN,IPS_B_EN;
-	always @(posedge CLK) begin
-		{IPS_A_EN,IPS_B_EN} <= {UNPACKER_A_TAK_EN,UNPACKER_B_TAK_EN};
-	end
+	wire IPS_A_EN = (CRNA_ST == CRN_OUT);
+	wire IPS_B_EN = (CRNB_ST == CRN_OUT);
 	
-	IPN_t        IPN_A,IPN_B;//614
+	IPN_t        IPN_A,IPN_B;
 	always_comb begin
 		case (SCOB_PRE0.BPP)
 			3'h0,
@@ -2141,7 +2139,7 @@ module MADAM_SE
 		bit          XY_FIFO_CORNER_PREV;
 		
 		if (!RST_N) begin
-			DOLO_CYCLE <= '0;
+			DOLO_CYCLE <= 0;
 			SYNC_FIFO_READ <= '0;
 		end
 		else if (EN && CE_R) begin
@@ -2765,7 +2763,7 @@ module MADAM_UNPACKER (
 		UP_PRELOAD,
 		UP_OFFS_READ,
 		UP_CTRL_READ,
-		UP_SKIP,
+		UP_TRANSPARENT,
 		UP_DATA_READ,
 		UP_DATA_REPEAT
 	} UnpackerState_t;
@@ -2864,24 +2862,31 @@ module MADAM_UNPACKER (
 				UP_CTRL_READ: if (AVAIL) begin
 					BUF_LOAD = BIT_CNT_OVER;
 					CODE_NEXT = 1;
-					if (PACKED) begin
-						{TYPE,COUNT} <= CODE[7:0];
-					end
+					{TYPE,COUNT} <= CODE[7:0];
 					BPP <= PRE0_BPP;
 					if (CODE[7:6] == 2'b00) begin
 						BUF_LOAD = 0;
 						EOL <= 1;
 						UP_ST <= UP_IDLE;
 					end else if (CODE[7:6] == 2'b10) begin
-						CODE_OUT = 1;
-						UP_ST <= UP_DATA_REPEAT;
+						UP_ST <= UP_TRANSPARENT;
 					end else begin
 						UP_ST <= UP_DATA_READ;
 					end
 				end
 				
-				UP_SKIP: if (AVAIL) begin
-					
+				UP_TRANSPARENT: if ((TAK || SKIP) && AVAIL) begin
+					if (SKIP) SKIP_CNT <= SKIP_CNT + 4'd1;
+					CODE_OUT = 1;
+					COUNT <= COUNT - 6'd1;
+					PIX_CNT <= PIX_CNT + 11'd1;
+					if (!COUNT) begin
+						BPP <= 3'h5;
+						{TYPE,COUNT} <= '0;
+						UP_ST <= UP_CTRL_READ;
+					end else begin
+						UP_ST <= UP_DATA_REPEAT;
+					end
 				end
 				
 				UP_DATA_READ: if ((TAK || SKIP) && AVAIL) begin
@@ -2948,7 +2953,7 @@ module MADAM_UNPACKER (
 			end
 			
 			if (CODE_OUT) begin
-				if (UP_ST == UP_CTRL_READ) begin
+				if (UP_ST == UP_TRANSPARENT) begin
 					OUT <= '0;
 					T <= 1;
 				end else begin 
@@ -2958,7 +2963,7 @@ module MADAM_UNPACKER (
 			end
 		end
 	end 
-	assign READY = (UP_ST == UP_DATA_READ && AVAIL && !SKIP) || (UP_ST == UP_DATA_REPEAT && !SKIP);
+	assign READY = ((UP_ST == UP_DATA_READ || UP_ST == UP_TRANSPARENT) && AVAIL && !SKIP) || (UP_ST == UP_DATA_REPEAT && !SKIP);
 
 endmodule
 	
