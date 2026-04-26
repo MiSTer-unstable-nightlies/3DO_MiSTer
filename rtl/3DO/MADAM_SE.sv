@@ -3541,7 +3541,14 @@ module MADAM_REGIS (
 								BW1 <= S;
 							end
 						end else begin
-							BW1 <= STAT.YADD01N ? W : E;
+							if (STAT.YADD01N) begin
+								BW1 <= W;
+							end else begin
+								BW1 <= E;
+								if (STAT.DY1N) begin
+									BW1 <= R;
+								end;
+							end
 						end
 					end
 					S: begin
@@ -3582,7 +3589,14 @@ module MADAM_REGIS (
 								BW2 <= S;
 							end
 						end else begin
-							BW2 <= STAT.YADD23N ? W : E;
+							if (STAT.YADD23N) begin
+								BW2 <= W;
+							end else begin
+								BW2 <= E;
+								if (STAT.DY2N) begin
+									BW2 <= R;
+								end;
+							end
 						end
 					end
 					S: begin
@@ -3620,6 +3634,10 @@ module MADAM_REGIS (
 							if (CS >= 2'd2) begin
 								RUN <= 0;
 							end
+						end else if (!STAT.YADD01N) begin
+							if (STAT.DY1N) begin
+								RUN <= 0;
+							end;
 						end
 					end
 					S: begin
@@ -3637,6 +3655,10 @@ module MADAM_REGIS (
 							if (CS >= 2'd2) begin
 								RUN <= 0;
 							end
+						end else if (!STAT.YADD23N) begin
+							if (STAT.DY2N) begin
+								RUN <= 0;
+							end;
 						end
 					end
 					S: begin
