@@ -24,11 +24,13 @@ module MADAM_SE
 	input              GRANT,
 	input              DMA_REG_ZERO,
 	output AddrGenCtl_t AG_CTL,
-	output     [23: 1] LEFT_ADDR,
-	output     [23: 1] RIGHT_ADDR,
-	output             LEFT_WRITE,
-	output             RIGHT_WRITE,
-	output             READ,
+	output     [23: 1] CFB_ADDR_A,
+	output     [23: 1] CFB_ADDR_B,
+	output             CFB_RAS_A,
+	output             CFB_RAS_B,
+	output             CFB_WRITE_A,
+	output             CFB_WRITE_B,
+	output             CFB_READ,
 	
 	input              INT_REQ,
 	
@@ -58,6 +60,7 @@ module MADAM_SE
 	output reg [31: 0] DBG_DX,
 	output reg [31: 0] DBG_DY,
 	output reg         DBG_SPRITE_INIT,
+	output reg [ 7: 0] DBG_SPRITE_NUM,DBG_SPRITE_CNT,
 	output reg [ 7: 0] DBG_START_CNT,
 	output reg [23: 0] DBG_SCOB_ADDR,
 	output reg [23: 0] DBG_SCOB_SOURCE,
@@ -216,7 +219,6 @@ module MADAM_SE
 		bit          NEXT_LINE_A_PEND,NEXT_LINE_B_PEND;
 `ifdef DEBUG
 		bit  [ 7: 0] DBG_EXT_OLD;
-		bit  [ 7: 0] DBG_SPRITE_NUM,DBG_SPRITE_CNT;
 `endif
 		
 		if (!RST_N) begin
@@ -240,7 +242,7 @@ module MADAM_SE
 			{SPRDRAW_RUN} <= '0;
 `ifdef DEBUG
 			{DBG_SPRITE_NUM,DBG_SPRITE_HIT} <= '0;
-			DBG_SPRITE_CNT <= 8'd10;
+			DBG_SPRITE_CNT <= 8'd255;
 `endif
 		end
 		else if (EN) begin
@@ -269,11 +271,8 @@ module MADAM_SE
 				
 				MS_SCOB_LOAD_1: if (CE_F) begin
 					if (BUS_STATE_FF == SCOB_YPOS1) begin
-						if (SCOB_FLAG.SKIP /*|| DBG_SPRITE_NUM == DBG_SPRITE_CNT*/) begin
+						if (SCOB_FLAG.SKIP) begin
 							MAIN_ST <= MS_END;
-`ifdef DEBUG
-							DBG_SPRITE_HIT <= DBG_SPRITE_NUM == DBG_SPRITE_CNT;
-`endif
 						end else if (SCOB_FLAG.LDPPMP || SCOB_FLAG.LDPRS || SCOB_FLAG.LDSIZE) begin
 							SCOBLD_REQ <= 3'd2;
 							MAIN_ST <= MS_SCOB_LOAD_2;
@@ -281,6 +280,9 @@ module MADAM_SE
 							SCOBLD_REQ <= 3'd3;
 							MAIN_ST <= MS_SCOB_LOAD_3;
 						end
+`ifdef DEBUG
+						DBG_SPRITE_HIT <= DBG_SPRITE_NUM == DBG_SPRITE_CNT;
+`endif
 					end
 				end
 				
@@ -1212,7 +1214,7 @@ module MADAM_SE
 	MathCtl_t    MATH_A_CTL,MATH_B_CTL;
 	
 	bit          REGIS_A_OUT,REGIS_B_OUT;
-	bit  [10: 0] Y_A,Y_B,REGIS_A_Y,REGIS_B_Y;
+	bit  [11: 0] Y_A,Y_B,REGIS_A_Y,REGIS_B_Y;
 	bit          CLIPX_A,CLIPY_A,CLIPX_B,CLIPY_B;
 	
 	wire         REGIS_A_START,REGIS_A_TERMINATE;
@@ -1220,7 +1222,7 @@ module MADAM_SE
 		Y_A = REGIS_A_OUT ? REGIS_A_Y : MATH_A_Y;
 				
 		CLIPX_A = ($signed(MATH_A_XL) > $signed({1'b0,REGCTL1.CLIPX}) && $signed(MATH_A_XR) > $signed({1'b0,REGCTL1.CLIPX})) || ($signed(MATH_A_XL) < 0 && $signed(MATH_A_XR) < 0);
-		CLIPY_A = $signed(Y_A) > $signed(REGCTL1.CLIPY) || $signed(Y_A) < 0;
+		CLIPY_A = $signed(Y_A) > $signed({1'b0,REGCTL1.CLIPY}) || $signed(Y_A) < 0;
 		REGIS_A_START = (CRNA_ST == CRN_CALC && !UNPACKER_A_EOL && !MATH_A_STAT.NP && !(MATH_A_STAT.MF || SCOB_FLAG.MARIA) && !MATH_A_STAT.RC);
 		REGIS_A_TERMINATE = ($signed(MATH_A_Y) > $signed(REGCTL1.CLIPY)) && SCOBCTL.ASCALL;
 	end
@@ -1250,7 +1252,7 @@ module MADAM_SE
 		Y_B = REGIS_B_OUT ? REGIS_B_Y : MATH_B_Y;
 				
 		CLIPX_B = ($signed(MATH_B_XL) > $signed({1'b0,REGCTL1.CLIPX}) && $signed(MATH_B_XR) > $signed({1'b0,REGCTL1.CLIPX})) || ($signed(MATH_B_XL) < 0 && $signed(MATH_B_XR) < 0);
-		CLIPY_B = $signed(Y_B) > $signed(REGCTL1.CLIPY) || $signed(Y_B) < 0;
+		CLIPY_B = $signed(Y_B) > $signed({1'b0,REGCTL1.CLIPY}) || $signed(Y_B) < 0;
 		REGIS_B_START = (CRNB_ST == CRN_CALC && !UNPACKER_B_EOL && !MATH_B_STAT.NP && !(MATH_B_STAT.MF || SCOB_FLAG.MARIA) && !MATH_B_STAT.RC);
 		REGIS_B_TERMINATE = ($signed(MATH_B_Y) > $signed(REGCTL1.CLIPY)) && SCOBCTL.ASCALL;
 	end
@@ -1398,7 +1400,7 @@ module MADAM_SE
 						end
 						LF_A_XY.X <= X1_A_CLIPPED;
 						LF_A_X2 <= X2_A_CLIPPED;
-						LF_A_XY.Y <= Y_A;
+						LF_A_XY.Y <= Y_A[10:0];
 `ifdef DEBUG
 						DBG_REGIS_A_Y_CNT <= DBG_REGIS_A_Y_CNT + 1'd1;
 `endif
@@ -1534,7 +1536,7 @@ module MADAM_SE
 						end
 						LF_B_XY.X <= X1_B_CLIPPED;
 						LF_B_X2 <= X2_B_CLIPPED;
-						LF_B_XY.Y <= Y_B;
+						LF_B_XY.Y <= Y_B[10:0];
 					end
 					REGIS_B_OUT <= 0;
 					CRNB_ST <= !REGIS_B_OUT ? CRN_CALC : UNPACKER_B_EOL && REGIS_B_DONE ? CRN_END : REGIS_B_DONE ? CRN_REGIS_DONE : CRN_REGIS; 
@@ -1991,7 +1993,7 @@ module MADAM_SE
 	
 		
 	bit  [15: 0] MATH_A_XA,MATH_A_YA;
-	bit  [10: 0] MATH_A_Y;
+	bit  [11: 0] MATH_A_Y;
 	bit  [11: 0] MATH_A_XL,MATH_A_XR;
 	MADAM_MATH_PLATFORM MATH_A 
 	(
@@ -2020,7 +2022,7 @@ module MADAM_SE
 	);
 	
 	bit  [15: 0] MATH_B_XA,MATH_B_YA;
-	bit  [10: 0] MATH_B_Y;
+	bit  [11: 0] MATH_B_Y;
 	bit  [11: 0] MATH_B_XL,MATH_B_XR;
 	MADAM_MATH_PLATFORM MATH_B 
 	(
@@ -2156,7 +2158,7 @@ module MADAM_SE
 	end 
 	assign SYNC_FIFO_RDREQ = SYNC_FIFO_READ && !DST_LAST_A && !DST_SUSPEND;
 	
-	//570
+	bit          DRAW_A_FF,DRAW_B_FF;
 	bit  [23: 1] DST_ADDR_A,DST_ADDR_B;
 	bit          DST_WRITE_A,DST_WRITE_B;
 	bit          DST_READ;
@@ -2166,7 +2168,6 @@ module MADAM_SE
 		bit  [23: 2] BASE;
 		bit  [23: 1] ADDR_FF_A,ADDR_FF_B;
 		bit  [20: 0] YOFFS1_A,YOFFS2_A,YOFFS1_B,YOFFS2_B;
-		bit          DRAW_A_FF,DRAW_B_FF;
 		bit  [23: 1] DST_ADDR_A_NEW,DST_ADDR_B_NEW;
 		bit  [23:11] DST_PAGE_A,DST_PAGE_B;
 		bit          DST_PB_A,DST_PB_B;
@@ -2242,11 +2243,20 @@ module MADAM_SE
 `endif
 		end
 	end 
-	assign LEFT_ADDR  = DST_ADDR_A;
-	assign RIGHT_ADDR = DST_ADDR_B;
-	assign LEFT_WRITE  = DST_WRITE_A;
-	assign RIGHT_WRITE = DST_WRITE_B;
-	assign READ = DST_READ;
+	assign CFB_ADDR_A  = DST_ADDR_A;
+	assign CFB_ADDR_B = DST_ADDR_B;
+`ifdef DEBUG
+	assign CFB_WRITE_A  = DST_WRITE_A & ~DBG_SPRITE_HIT;
+	assign CFB_WRITE_B = DST_WRITE_B & ~DBG_SPRITE_HIT;
+	assign CFB_RAS_A  = (BUS_STATE_FF == CFB_INIT1 && DRAW_A_FF) & ~DBG_SPRITE_HIT;
+	assign CFB_RAS_B = (BUS_STATE_FF == CFB_INIT1 && DRAW_B_FF) & ~DBG_SPRITE_HIT;
+`else
+	assign CFB_WRITE_A  = DST_WRITE_A;
+	assign CFB_WRITE_B = DST_WRITE_B;
+	assign CFB_RAS_A  = (BUS_STATE_FF == CFB_INIT1 && DRAW_A_FF);
+	assign CFB_RAS_B = (BUS_STATE_FF == CFB_INIT1 && DRAW_B_FF);
+`endif
+	assign CFB_READ = DST_READ;
 	
 	always_comb begin
 		AG_CTL = '0;
@@ -3152,7 +3162,7 @@ module MADAM_MATH_PLATFORM (
 	
 	output MathStat_t STAT,
 	
-	output    [10: 0] YO,
+	output    [11: 0] YO,
 	output    [11: 0] XLO,
 	output    [11: 0] XRO
 	
@@ -3454,9 +3464,9 @@ module MADAM_MATH_PLATFORM (
 							 $signed(Ya1[31:16]) <= $signed(Ya0[31:16]) &&                                               $signed(Ya1[31:16]) <= $signed(Ya2[31:16]) && $signed(Ya1[31:16]) <= $signed(Ya3[31:16]) ? 2'h1 : 
 							 $signed(Ya2[31:16]) <= $signed(Ya0[31:16]) && $signed(Ya2[31:16]) <= $signed(Ya1[31:16]) &&                                               $signed(Ya2[31:16]) <= $signed(Ya3[31:16]) ? 2'h2 : 2'h3;
 						
-	assign YO = Y[10:0];
-	assign XLO = X1[11:0];
-	assign XRO = X2[11:0];
+	assign YO = MathClipCoord(Y);
+	assign XLO = MathClipCoord(X1);
+	assign XRO = MathClipCoord(X2);
 	
 `ifdef DEBUG
 	assign DBG_Xa0_OVER = (Xa0[31:26] != 6'b000000 && Xa0[31:26] != 6'b111111);

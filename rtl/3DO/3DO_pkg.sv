@@ -190,7 +190,6 @@ package P3DO_PKG;
 		EXTP_WRITE0,EXTP_WRITE1,
 		EXTP_LOOP0,EXTP_LOOP1,
 		EXTP_LOOP2,EXTP_LOOP3,
-		EXTP_INFO0,EXTP_INFO1,
 		EXTP_REINIT0,EXTP_REINIT1,
 		
 		PLAY_PREINIT1,
@@ -398,6 +397,10 @@ package P3DO_PKG;
 		bit [10: 0] Y;
 		bit [11: 0] X;
 	} YX_t; 
+	
+	function bit [11:0] MathClipCoord(input bit [15:0] c);
+		return c[15:11] != 5'b00000 && c[15:11] != 5'b11111 ? {c[15],{11{~c[15]}}} : c[11:0];
+	endfunction
 	
 	function bit [16:0] MathAdder16(input bit [15:0] a, input bit [15:0] b);
 		bit  [16:0] res;

@@ -347,7 +347,6 @@ module CLIO_DSP_FIFO (
 	output [ 3:0] COUNT
 );
 
-	wire [15: 0] sub_wire0;
 	bit  [ 2: 0] RADDR;
 	bit  [ 2: 0] WADDR;
 	bit  [ 3: 0] AMOUNT;
@@ -394,6 +393,7 @@ module CLIO_DSP_FIFO (
 											  	
 `else 
 	
+	wire [15: 0] sub_wire0;
 	altdpram	altdpram_component (
 				.data (DATA),
 				.inclock (CLK),

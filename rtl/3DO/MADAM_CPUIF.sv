@@ -21,6 +21,7 @@ module MADAM_CPUIF
 	input              nTRANS,
 	input              LOCK,
 	output             DBE,
+	output             nRES,
 	output             MCLK_PH1,
 	output             MCLK_PH2,
 	
@@ -42,6 +43,19 @@ module MADAM_CPUIF
 
 	wire CPU_PH1 = PHASE1 & CE_R;
 	wire CPU_PH2 = PHASE2 & CE_R;
+	
+	bit         RESET;
+	always @(posedge CLK or negedge RST_N) begin
+		if (!RST_N) begin
+			RESET <= 1;
+		end
+		else if (EN && CE_R) begin
+			if (PHASE2) begin
+				RESET <= 0;
+			end
+		end
+	end 
+	assign nRES = ~RESET;
 	
 	bit         SLOW_WAIT;
 	always @(posedge CLK or negedge RST_N) begin

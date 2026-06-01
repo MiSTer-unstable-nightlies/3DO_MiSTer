@@ -129,12 +129,12 @@ module MADAM_EXTPIF
 				BLOCK_END <= DMA_REG_OVF;
 				BLOCK_CONTINUE <= DMA_REG_OVF && !BURST_LAST && (DMA_CHAN != 5'h14);
 			end
-			if (BUS_STATE_FF == EXTP_INFO1) begin
+			if (BUS_STATE_FF == EXTP_LOOP0 && BLOCK_END) begin
+				BLOCK_AND_LEN_END <= 1;
+			end
+			if (BUS_STATE_FF == EXTP_LOOP3) begin
 				BLOCK_END <= 0;
 				BLOCK_AND_LEN_END <= 0;
-			end
-			if (BUS_STATE_FF == EXTP_LOOP2 && BLOCK_END) begin
-				BLOCK_AND_LEN_END <= 1;
 			end
 		end
 	end
@@ -151,10 +151,10 @@ module MADAM_EXTPIF
 			if ((BUS_READ || BUS_WRITE) && !AG_PBI && !DMA_REG_OVF && !BURST_LAST) begin
 				CCODE <= 3'h2;
 			end
-			if (BUS_STATE_FF == EXTP_INFO0) begin
+			if (BUS_STATE_FF == EXTP_LOOP2 && !BLOCK_CONTINUE) begin
 				CCODE <= 3'h7;
 			end
-			if (BUS_STATE_FF == EXTP_INFO1) begin
+			if (BUS_STATE_FF == EXTP_LOOP3) begin
 				CCODE <= BLOCK_AND_LEN_END ?  3'h3 : 3'h2;//TODO
 			end
 		end
@@ -292,18 +292,16 @@ module MADAM_EXTPIF
 				NEXT = {BLOCK_CONTINUE,1'b0,DMA_DIR};
 			end
 			
-			EXTP_LOOP3,
-			EXTP_REINIT1: begin
-				AG_CTL.DMA_ZERO_SEL = 1;
-				AG_CTL.DMA_ADDR_SEL = 1;
-				AG_CTL.DMA_ADDER_CTL = 4'b0000;
-			end
-			
-			EXTP_INFO0: begin
+			EXTP_LOOP3: begin
 				AG_CTL.DMA_ZERO_SEL = 1;
 				AG_CTL.DMA_REG_WRITE_SEL = 0;
 				AG_CTL.DMA_REG_WRITE_CTL = {DMA_CHAN[0],2'h3};
 				AG_CTL.DMA_REG_WRITE_EN = 0;
+				AG_CTL.DMA_ADDR_SEL = 1;
+				AG_CTL.DMA_ADDER_CTL = 4'b0000;
+			end
+			
+			EXTP_REINIT1: begin
 				AG_CTL.DMA_ADDR_SEL = 1;
 				AG_CTL.DMA_ADDER_CTL = 4'b0000;
 			end
