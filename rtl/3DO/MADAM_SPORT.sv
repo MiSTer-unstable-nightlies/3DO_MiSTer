@@ -27,6 +27,7 @@ module MADAM_SPORT
 	input              VIDOUT_PFL,
 	output reg         VIDMID_REQ,
 	output reg         VIDMID_CURR,
+	output reg         VIDMID_FIRST,
 	input              VIDOUT_ACK,
 	
 	input              VCE,
@@ -265,13 +266,20 @@ module MADAM_SPORT
 		if (!RST_N) begin
 			VIDMID_REQ <= 0;
 			VIDMID_CURR <= 0;
+			VIDMID_FIRST <= 0;
 			{LMID_PEND,RMID_PEND} <= '0;
 		end
 		else if (EN && CE_R) begin
+			if (VID_PREV_TRANS || VID_CURR_TRANS) begin
+				VIDMID_FIRST <= 1;
+				VIDMID_CURR <= VIDOUT_PFL;
+			end
+			if (BUS_STATE_FF == VID_MIDPREV1 || BUS_STATE_FF == VID_MIDCURR1) begin
+				VIDMID_FIRST <= 0;
+			end
+			
 			if (LMIDLINE_REQ && VIDEO_TRANS_EXEC) LMID_PEND <= 1;
 			if (RMIDLINE_REQ && VIDEO_TRANS_EXEC) RMID_PEND <= 1;
-			if ((VID_PREV_TRANS &&  VIDOUT_PFL) || (VID_CURR_TRANS && !VIDOUT_PFL)) LMID_PEND <= 1;
-			if ((VID_PREV_TRANS && !VIDOUT_PFL) || (VID_CURR_TRANS &&  VIDOUT_PFL)) RMID_PEND <= 1;
 			
 			if (LMID_PEND && !VIDMID_REQ) begin
 				LMID_PEND <= 0;

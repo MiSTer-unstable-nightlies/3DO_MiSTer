@@ -48,6 +48,7 @@ module MADAM_ARB
 	input              VIDOUT_REQ,
 	input              VIDMID_REQ,
 	input              VIDMID_CURR,
+	input              VIDMID_FIRST,
 	output reg         VIDOUT_ACK,
 	output reg         SPORT_GRANT,
 	input AddrGenCtl_t SPORT_AG_CTL,
@@ -137,7 +138,7 @@ module MADAM_ARB
 					if (CLIO_REQ) begin
 						CPU_GRANT_INT <= 1;
 					end
-					else if (!CPU_READY && !SE_RUN) begin
+					else if (!CPU_READY && !SE_RUN && !HI_PRIO_REQ) begin
 						CPU_GRANT_INT <= 1;
 					end
 					else if (VIDMID_REQ) begin	//priority 2
@@ -260,12 +261,10 @@ module MADAM_ARB
 						BUS_ST <= EXTP_LOOP3;
 					end
 				end	
-				EXTP_LOOP3: BUS_ST <= EXTP_INFO0;
-				EXTP_INFO0: BUS_ST <= EXTP_INFO1;	
-				EXTP_INFO1: begin
+				EXTP_LOOP3: begin
 					begin
 						EXTP_GRANT_INT <= 0;
-						if (!SE_RUN) CPU_GRANT_INT <= 1;
+						if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
 						BUS_ST <= BUS_IDLE;
 					end
 				end
@@ -285,7 +284,7 @@ module MADAM_ARB
 				PLAY_WRITE0: BUS_ST <= PLAY_WRITE1;
 				PLAY_WRITE1: begin
 					PLAYER_GRANT_INT <= 0;
-					if (!SE_RUN) CPU_GRANT_INT <= 1;
+					if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
 					BUS_ST <= BUS_IDLE;
 				end
 				
@@ -297,7 +296,7 @@ module MADAM_ARB
 				REF_WRITE2: BUS_ST <= REF_WRITE3;
 				REF_WRITE3: begin
 					PLAYER_GRANT_INT <= 0;
-					if (!SE_RUN) CPU_GRANT_INT <= 1;
+					if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
 					BUS_ST <= BUS_IDLE;
 				end
 				
@@ -727,7 +726,7 @@ module MADAM_ARB
 				CLUT_MIDTRANS0: BUS_ST <= CLUT_MIDTRANS1;
 				CLUT_MIDTRANS1: begin
 					SPORT_GRANT_INT <= 0;
-					if (!SE_RUN) CPU_GRANT_INT <= 1;
+					if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
 					BUS_ST <= BUS_IDLE;
 				end
 				
@@ -740,9 +739,15 @@ module MADAM_ARB
 				VID_CALC1: BUS_ST <= VID_CURR0;
 				VID_CURR0: BUS_ST <= VID_CURR1;
 				VID_CURR1: begin
-					SPORT_GRANT_INT <= 0;
-					if (!SE_RUN) CPU_GRANT_INT <= 1;
-					BUS_ST <= BUS_IDLE;
+					if (VIDMID_FIRST) begin
+						VIDMID_PREV_CURR <= VIDMID_CURR;
+						BUS_ST <= VID_MIDPREINIT1;
+					end
+					else begin
+						SPORT_GRANT_INT <= 0;
+						if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
+						BUS_ST <= BUS_IDLE;
+					end
 				end
 				
 				VID_MIDPREINIT1: BUS_ST <= VID_MIDINIT0;
@@ -750,16 +755,28 @@ module MADAM_ARB
 				VID_MIDINIT1: BUS_ST <= VIDMID_PREV_CURR ? VID_MIDCURR0 : VID_MIDPREV0;
 				VID_MIDPREV0: BUS_ST <= VID_MIDPREV1;
 				VID_MIDPREV1: begin
-					SPORT_GRANT_INT <= 0;
-					if (!SE_RUN) CPU_GRANT_INT <= 1;
-					BUS_ST <= BUS_IDLE;
+					if (VIDMID_FIRST) begin
+						VIDMID_PREV_CURR <= ~VIDMID_PREV_CURR;
+						BUS_ST <= VID_MIDCURR0;
+					end
+					else begin
+						SPORT_GRANT_INT <= 0;
+						if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
+						BUS_ST <= BUS_IDLE;
+					end
 				end
 				
 				VID_MIDCURR0: BUS_ST <= VID_MIDCURR1;
 				VID_MIDCURR1: begin
-					SPORT_GRANT_INT <= 0;
-					if (!SE_RUN) CPU_GRANT_INT <= 1;
-					BUS_ST <= BUS_IDLE;
+					if (VIDMID_FIRST) begin
+						VIDMID_PREV_CURR <= ~VIDMID_PREV_CURR;
+						BUS_ST <= VID_MIDPREV0;
+					end
+					else begin
+						SPORT_GRANT_INT <= 0;
+						if (!SE_RUN && !HI_PRIO_REQ) CPU_GRANT_INT <= 1;
+						BUS_ST <= BUS_IDLE;
+					end
 				end
 				
 				default:;
@@ -797,8 +814,7 @@ module MADAM_ARB
 				 BUS_ST == EXTP_PREINIT3 || BUS_ST == EXTP_INIT2 || BUS_ST == EXTP_INIT3 ||
 				 BUS_ST == EXTP_WRITE0 || BUS_ST == EXTP_WRITE1 ||			
 				 BUS_ST == EXTP_LOOP0 || BUS_ST == EXTP_LOOP1 ||
-				 BUS_ST == EXTP_LOOP2 || BUS_ST == EXTP_LOOP3 ||	
-				 BUS_ST == EXTP_INFO0 || BUS_ST == EXTP_INFO1) begin
+				 BUS_ST == EXTP_LOOP2 || BUS_ST == EXTP_LOOP3) begin
 				DMA_CTL2 <= EXTP_AG_CTL;
 			end
 			else if (BUS_ST == SCOB_PREINIT1 || BUS_ST == SCOB_INIT0 || BUS_ST == SCOB_INIT1 ||

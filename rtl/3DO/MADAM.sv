@@ -23,6 +23,7 @@ module MADAM
 	input              nTRANS,
 	input              LOCK,
 	output             DBE,
+	output             nCPURES,
 	output             MCLK_PH1,
 	output             MCLK_PH2,
 	output             PH1,
@@ -156,10 +157,9 @@ module MADAM
 	bit  [ 3: 0] SE_STAT;
 	AddrGenCtl_t SE_AG_CTL;
 	bit          SE_GRANT;
-	bit  [23: 1] SE_LEFT_ADDR;
-	bit  [23: 1] SE_RIGHT_ADDR;
-	bit          SE_LEFT_WRITE;
-	bit          SE_RIGHT_WRITE;
+	bit  [23: 1] SE_ADDR_A,SE_ADDR_B;
+	bit          SE_WRITE_A,SE_WRITE_B;
+	bit          SE_RAS_A,SE_RAS_B;
 	bit          SE_READ;
 
 	//S-PORT
@@ -169,7 +169,7 @@ module MADAM
 	bit          VIDOUT_REQ;
 	bit          VIDOUT_PFL;
 	bit          VIDMID_REQ;
-	bit          VIDMID_CURR;
+	bit          VIDMID_CURR,VIDMID_FIRST;
 	bit          VIDOUT_ACK;
 	AddrGenCtl_t SPORT_AG_CTL;
 	bit          SPORT_GRANT;
@@ -451,9 +451,10 @@ module MADAM
 		.CLUTWR_REQ(CLUTWR_REQ),
 		.CLUTWR_ACK(CLUTWR_ACK),
 		.VIDOUT_REQ(VIDOUT_REQ),
+		.VIDOUT_ACK(VIDOUT_ACK),
 		.VIDMID_REQ(VIDMID_REQ),
 		.VIDMID_CURR(VIDMID_CURR),
-		.VIDOUT_ACK(VIDOUT_ACK),
+		.VIDMID_FIRST(VIDMID_FIRST),
 		.SPORT_GRANT(SPORT_GRANT),
 		.SPORT_AG_CTL(SPORT_AG_CTL),
 		
@@ -490,6 +491,7 @@ module MADAM
 		.nTRANS(nTRANS),
 		.LOCK(LOCK),
 		.DBE(DBE),
+		.nRES(nCPURES),
 		.MCLK_PH1(MCLK_PH1),
 		.MCLK_PH2(MCLK_PH2),
 		
@@ -593,10 +595,12 @@ module MADAM
 		
 		.EXTP_GRANT(EXTP_GRANT),
 		
-		.SE_LEFT_ADDR(SE_LEFT_ADDR),
-		.SE_RIGHT_ADDR(SE_RIGHT_ADDR),
-		.SE_LEFT_WRITE(SE_LEFT_WRITE),
-		.SE_RIGHT_WRITE(SE_RIGHT_WRITE),
+		.SE_ADDR_A(SE_ADDR_A),
+		.SE_ADDR_B(SE_ADDR_B),
+		.SE_RAS_A(SE_RAS_A),
+		.SE_RAS_B(SE_RAS_B),
+		.SE_WRITE_A(SE_WRITE_A),
+		.SE_WRITE_B(SE_WRITE_B),
 		.SE_READ(SE_READ),
 		.SE_GRANT(SE_GRANT),
 		
@@ -665,11 +669,13 @@ module MADAM
 		.GRANT(SE_GRANT),
 		.DMA_REG_ZERO(AG_REG_ZERO),
 		.AG_CTL(SE_AG_CTL),
-		.LEFT_ADDR(SE_LEFT_ADDR),
-		.RIGHT_ADDR(SE_RIGHT_ADDR),
-		.LEFT_WRITE(SE_LEFT_WRITE),
-		.RIGHT_WRITE(SE_RIGHT_WRITE),
-		.READ(SE_READ),
+		.CFB_ADDR_A(SE_ADDR_A),
+		.CFB_ADDR_B(SE_ADDR_B),
+		.CFB_RAS_A(SE_RAS_A),
+		.CFB_RAS_B(SE_RAS_B),
+		.CFB_WRITE_A(SE_WRITE_A),
+		.CFB_WRITE_B(SE_WRITE_B),
+		.CFB_READ(SE_READ),
 		
 		.INT_REQ(~MIRQ_N),
 		
@@ -716,6 +722,7 @@ module MADAM
 		.VIDOUT_PFL(VIDOUT_PFL),
 		.VIDMID_REQ(VIDMID_REQ),
 		.VIDMID_CURR(VIDMID_CURR),
+		.VIDMID_FIRST(VIDMID_FIRST),
 		.VIDOUT_ACK(VIDOUT_ACK),
 		
 		.VCE(VCE),

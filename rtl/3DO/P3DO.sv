@@ -113,6 +113,7 @@ module P3DO
 	bit          CPU_nTRANS;
 	bit          CPU_LOCK;
 	bit          CPU_DBE;
+	bit          CPU_nRES;
 	bit          MCLK_PH1,MCLK_PH2;
 	
 	bit  [31: 0] MADAM_DI;
@@ -162,7 +163,7 @@ module P3DO
 		.CE_R(MCLK_PH1),
 		.CE_F(MCLK_PH2),
 		
-		.nRESET(RESET_N),
+		.nRESET(CPU_nRES),
 		.nFIQ(FIRQ_N),
 		.nIRQ(1'b1),
 		
@@ -249,6 +250,7 @@ module P3DO
 		.nTRANS(CPU_nTRANS),
 		.LOCK(CPU_LOCK),
 		.DBE(CPU_DBE),
+		.nCPURES(CPU_nRES),
 		.MCLK_PH1(MCLK_PH1),
 		.MCLK_PH2(MCLK_PH2),
 		.PH1(MCLK_CE),
