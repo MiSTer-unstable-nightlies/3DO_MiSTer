@@ -55,7 +55,7 @@ module CLIO_DSP
 	bit          ARITH_NUM;
 	bit          COMP_NUM;
 	bit  [15: 0] MOVE;
-	bit          WRITE_EN,MOVE_WRITE_EN;
+	bit          /*WRITE_EN,*/MOVE_WRITE_EN;
 	bit  [ 9: 0] WRITE[2];
 	bit          DO_WRITE[2];
 	
@@ -253,7 +253,7 @@ module CLIO_DSP
 	                (FETCH_ST == FETCH_INST && INST_MOVEREG) || (FETCH_ST == FETCH_OPERAND && (REG3_OPERAND || REG12_OPERAND)) ? REG_ADDR :
 						                                                                                                              ADDR_OPER.OP_ADDR;
 	
-		bit          READ_CYCLE;
+//		bit          READ_CYCLE;
 		bit          MOVE_CYCLE;
 	always @(posedge CLK or negedge RST_N) begin
 		bit  [ 9: 0] SUBR;
@@ -487,7 +487,7 @@ module CLIO_DSP
 			WRITE_ACT = 0;
 			WRITE_BUS = '0;
 			MOVE_CYCLE <= 0;
-			READ_CYCLE <= 0;
+//			READ_CYCLE <= 0;
 //			DO_WRITE <= '{2{0}};
 			MOVE_WRITE_EN <= 0;
 			case (OPER_ST)
@@ -520,7 +520,7 @@ module CLIO_DSP
 									WRITE_BUS = RDADDR;
 								end
 								else begin
-									READ_CYCLE <= 1;
+//									READ_CYCLE <= 1;
 									WRITE_BUS = RDDATA[9:0];
 								end
 								
@@ -538,26 +538,26 @@ module CLIO_DSP
 							OPER_ST <= OPER_LOAD;
 						end
 						else if (ADDR_DIR_OPERAND) begin
-							READ_CYCLE <= 1;
+//							READ_CYCLE <= 1;
 							MOVE <= OP_BUS;
 							MOVE_WRITE_EN <= 1;
 							OPER_ST <= OPER_LOAD;
 						end
 						else if (ADDR_IND_OPERAND) begin
-							READ_CYCLE <= 1;
+//							READ_CYCLE <= 1;
 							INDIRECT <= RDDATA[9:0];
 							MOVE_CYCLE <= 1;
 							OPER_ST <= OPER_INDIRECT;
 						end
 						else if (REG1_OPERAND) begin
 							if (!REG12_OPER.R1D_I) begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								MOVE <= OP_BUS;
 								MOVE_WRITE_EN <= 1;
 								OPER_ST <= OPER_LOAD;
 							end
 							else begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								INDIRECT <= RDDATA[9:0];
 								MOVE_CYCLE <= 1;
 								OPER_ST <= OPER_INDIRECT;
@@ -571,7 +571,7 @@ module CLIO_DSP
 						end
 						else if (ADDR_DIR_OPERAND) begin
 							if (OPERAND_REQS) begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								HIGH_PRIORITY = 1;
 								WRITE_BUS = RDADDR;
 								if (ADDR_OPER.WB1) begin
@@ -588,7 +588,7 @@ module CLIO_DSP
 						end
 						else if (ADDR_IND_OPERAND) begin
 							if (OPERAND_REQS) begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								INDIRECT <= RDDATA[9:0];
 								HIGH_PRIORITY = 1;
 								WRITE_BUS = RDDATA[9:0];
@@ -598,7 +598,7 @@ module CLIO_DSP
 								OPER_ST <= OPER_INDIRECT;
 							end
 							else begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								WRITE_BUS = RDDATA[9:0];
 								WRITE_ACT = 1;
 								NUM_OPERANDS <= NUM_OPERANDS >> 1;
@@ -607,13 +607,13 @@ module CLIO_DSP
 						end
 						else if (REG3_OPERAND && CURR_REG_OPERAND == 2'd0) begin
 							if (!REG3_OPER.R3D_I) begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								HIGH_PRIORITY = 1;
 								CURR_REG_OPERAND <= 2'd2;
 								OPER_ST <= OPER_LOAD;
 							end
 							else begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								INDIRECT <= RDDATA[9:0];
 								CURR_REG_OPERAND <= 2'd2 + 2'd1;
 								OPER_ST <= OPER_INDIRECT;
@@ -621,7 +621,7 @@ module CLIO_DSP
 						end
 						else if ((REG2_OPERAND && CURR_REG_OPERAND == 2'd0) || CURR_REG_OPERAND == 2'd2) begin
 							if (!REG12_OPER.R2D_I) begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								HIGH_PRIORITY = 1;
 								CURR_REG_OPERAND <= 2'd1;
 								WRITE_BUS = RDADDR;
@@ -631,7 +631,7 @@ module CLIO_DSP
 								OPER_ST <= OPER_LOAD;
 							end
 							else begin
-								READ_CYCLE <= 1;
+//								READ_CYCLE <= 1;
 								INDIRECT <= RDDATA[9:0];
 								CURR_REG_OPERAND <= 2'd1 + 2'd1;
 								WRITE_BUS = RDDATA[9:0];
@@ -644,7 +644,7 @@ module CLIO_DSP
 						else if ((REG1_OPERAND && CURR_REG_OPERAND == 2'd0) || CURR_REG_OPERAND == 2'd1) begin
 							if (!REG12_OPER.R1D_I) begin
 								if (OPERAND_REQS) begin
-									READ_CYCLE <= 1;
+//									READ_CYCLE <= 1;
 									HIGH_PRIORITY = 1;
 									WRITE_BUS = RDADDR;
 									if (REG12_OPER.WB1 && !REG3_OPERAND) begin
@@ -661,7 +661,7 @@ module CLIO_DSP
 							end
 							else begin
 								if (OPERAND_REQS) begin
-									READ_CYCLE <= 1;
+//									READ_CYCLE <= 1;
 									INDIRECT <= RDDATA[9:0];
 									WRITE_BUS = RDDATA[9:0];
 									if (REG12_OPER.WB1 && !REG3_OPERAND) begin
@@ -670,7 +670,7 @@ module CLIO_DSP
 									OPER_ST <= OPER_INDIRECT;
 								end
 								else begin
-									READ_CYCLE <= 1;
+//									READ_CYCLE <= 1;
 									WRITE_BUS = RDDATA[9:0];
 									WRITE_ACT = 1;
 									NUM_OPERANDS <= NUM_OPERANDS >> 1;
@@ -683,7 +683,7 @@ module CLIO_DSP
 				end
 				
 				OPER_INDIRECT: begin
-					READ_CYCLE <= 1;
+//					READ_CYCLE <= 1;
 					if (MOVE_CYCLE) begin
 						MOVE <= OP_BUS;
 						MOVE_WRITE_EN <= 1;
@@ -741,18 +741,18 @@ module CLIO_DSP
 			end
 			
 			BUF_UPDATE = 0;
-			WRITE_EN <= 0;
+//			WRITE_EN <= 0;
 			case (COMP_ST)
 				COMP_IDLE: if (RESET_DELAY) begin
 					COMP_ST <= COMP_IDLE;
 				end
 				else begin
 					if (MOVE_WRITE_EN) begin
-						WRITE_EN <= 1;
+//						WRITE_EN <= 1;
 					end
 					else if (DO_WRITE[COMP_NUM]) begin
 						DO_WRITE[COMP_NUM] <= 0;
-						WRITE_EN <= 1;
+//						WRITE_EN <= 1;
 					end
 					
 					if (COMP_RDY) begin
@@ -771,11 +771,11 @@ module CLIO_DSP
 				
 				COMP_CALC: begin
 					if (MOVE_WRITE_EN) begin
-						WRITE_EN <= 1;
+//						WRITE_EN <= 1;
 					end
 					else if (DO_WRITE[~COMP_NUM]) begin
 						DO_WRITE[~COMP_NUM] <= 0;
-						WRITE_EN <= 1;
+//						WRITE_EN <= 1;
 					end
 					
 					if (COMP_WAIT[1][3:1]) begin

@@ -105,6 +105,8 @@ module CLIO
 	
 	bit  [16: 0] NOISE;
 	
+	bit  [11: 0] RESET_DELAY;
+	
 	bit  [ 2: 0] CLC1,CLC2;
 	
 	typedef enum bit [2:0] {
@@ -305,10 +307,10 @@ module CLIO
 				if (EIFIFO_OE_LATCH[11] && EIFIFO_COUNT[11] < 4'd2 && !DMA_TO_DSP_PEND[11]) DMA_TO_DSP_PEND[11] <= 1;
 				if (EIFIFO_OE_LATCH[12] && EIFIFO_COUNT[12] < 4'd2 && !DMA_TO_DSP_PEND[12]) DMA_TO_DSP_PEND[12] <= 1;
 				
-				if (/*EOFIFO_WE_LATCH[0] &&*/ EOFIFO_COUNT[0] >= 4'd6 && !DMA_FROM_DSP_PEND[0]) DMA_FROM_DSP_PEND[0] <= 1;
-				if (/*EOFIFO_WE_LATCH[1] &&*/ EOFIFO_COUNT[1] >= 4'd6 && !DMA_FROM_DSP_PEND[1]) DMA_FROM_DSP_PEND[1] <= 1;
-				if (/*EOFIFO_WE_LATCH[2] &&*/ EOFIFO_COUNT[2] >= 4'd6 && !DMA_FROM_DSP_PEND[2]) DMA_FROM_DSP_PEND[2] <= 1;
-				if (/*EOFIFO_WE_LATCH[3] &&*/ EOFIFO_COUNT[3] >= 4'd6 && !DMA_FROM_DSP_PEND[3]) DMA_FROM_DSP_PEND[3] <= 1;
+				if (EOFIFO_WE_LATCH[0] && EOFIFO_COUNT[0] >= 4'd6 && !DMA_FROM_DSP_PEND[0]) DMA_FROM_DSP_PEND[0] <= 1;
+				if (EOFIFO_WE_LATCH[1] && EOFIFO_COUNT[1] >= 4'd6 && !DMA_FROM_DSP_PEND[1]) DMA_FROM_DSP_PEND[1] <= 1;
+				if (EOFIFO_WE_LATCH[2] && EOFIFO_COUNT[2] >= 4'd6 && !DMA_FROM_DSP_PEND[2]) DMA_FROM_DSP_PEND[2] <= 1;
+				if (EOFIFO_WE_LATCH[3] && EOFIFO_COUNT[3] >= 4'd6 && !DMA_FROM_DSP_PEND[3]) DMA_FROM_DSP_PEND[3] <= 1;
 				
 				if (EOFIFO_FLUSH[0] && EOFIFO_COUNT[0] && !DMA_FROM_DSP_PEND[0]) DMA_FROM_DSP_PEND[0] <= 1;
 				if (EOFIFO_FLUSH[1] && EOFIFO_COUNT[1] && !DMA_FROM_DSP_PEND[1]) DMA_FROM_DSP_PEND[1] <= 1;
@@ -324,7 +326,7 @@ module CLIO
 				CLC2 <= CLC1;
 				CLC1 <= CLC;
 				
-						
+				RESET_DELAY <= {RESET_DELAY[10:0],CSTAT[4]};
 				CSTAT[4] <= 0;
 				FIFOINIT <= '0;
 				DSP_RST <= {1'b0,DSP_RST[1]};
@@ -356,7 +358,7 @@ module CLIO
 								case ({A[5:2],2'b00})
 									6'h08: VINT0 <= CPU_DI[10:0];
 									6'h0C: VINT1 <= CPU_DI[10:0];
-									6'h28: begin CSTAT <= CPU_DI; CSTAT[6] <= CPU_DI[5]; end
+									6'h28: begin CSTAT <= CPU_DI; CSTAT[6] <= &CPU_DI[5:4]; end
 									default:;
 								endcase
 								IO_ST <= IO_IDLE;
@@ -971,7 +973,7 @@ module CLIO
 	
 	assign FIRQ_N = ~(|(INT0_PEND[30:0] & INT0_EN[30:0]) | |(INT1_PEND & INT1_EN));
 	
-	assign RESET_N = ~CSTAT[4];
+	assign RESET_N = ~|RESET_DELAY[11:8];
 	
 	//XBUS
 	CLIO_XBUS XBUS
@@ -1304,14 +1306,14 @@ module CLIO
 											  {EOFIFO_COUNT[3]}};
 											  
 	bit          EIFIFO_OE_LATCH[13];
-//	bit          EOFIFO_WE_LATCH[4];
+	bit          EOFIFO_WE_LATCH[4];
 	wire EIFIFO_BUF_WE = (DSP_ADDR[7:0] >= 9'h070 && DSP_ADDR[7:0] <= 9'h07E && DSP_EIRAM_WE);//0x070-0x07E
 	bit  [15: 0] EIFIFO_BUF[13];
 //	bit          EIFIFO_BUF_EMPTY[13];
 	always @(posedge CLK or negedge RST_N) begin
 		if (!RST_N) begin
 			EIFIFO_OE_LATCH <= '{13{0}};
-//			EOFIFO_WE_LATCH <= '{4{0}};
+			EOFIFO_WE_LATCH <= '{4{0}};
 			EIFIFO_BUF <= '{13{'0}};
 //			EIFIFO_BUF_EMPTY <= '{13{0}};
 		end
@@ -1330,10 +1332,10 @@ module CLIO
 				EIFIFO_OE_LATCH[10] <= EIFIFO10_OE;
 				EIFIFO_OE_LATCH[11] <= EIFIFO11_OE;
 				EIFIFO_OE_LATCH[12] <= EIFIFO12_OE;
-//				EOFIFO_WE_LATCH[ 0] <= EOFIFO0_WE;
-//				EOFIFO_WE_LATCH[ 1] <= EOFIFO1_WE;
-//				EOFIFO_WE_LATCH[ 2] <= EOFIFO2_WE;
-//				EOFIFO_WE_LATCH[ 3] <= EOFIFO3_WE;
+				EOFIFO_WE_LATCH[ 0] <= EOFIFO0_WE;
+				EOFIFO_WE_LATCH[ 1] <= EOFIFO1_WE;
+				EOFIFO_WE_LATCH[ 2] <= EOFIFO2_WE;
+				EOFIFO_WE_LATCH[ 3] <= EOFIFO3_WE;
 				
 				if ((EIFIFO_OE || EIFIFO_OE2) && DSP_EI_OE) begin
 					EIFIFO_BUF[DSP_EI_ADDR[3:0]] <= EIFIFO_Q[DSP_EI_ADDR[3:0]];
