@@ -693,6 +693,7 @@ module CLIO_DSP
 					end
 					if (CURR_REG_OPERAND == 2'd3) CURR_REG_OPERAND <= 2'd2;
 					if (CURR_REG_OPERAND == 2'd2) CURR_REG_OPERAND <= 2'd1;
+					if (CURR_REG_OPERAND == 2'd1) CURR_REG_OPERAND <= 2'd0;
 					OPER_ST <= OPER_LOAD;
 				end
 			endcase

@@ -327,6 +327,15 @@ module CLIO
 				CLC1 <= CLC;
 				
 				RESET_DELAY <= {RESET_DELAY[10:0],CSTAT[4]};
+				if (CSTAT[4]) begin
+					if (PAL) begin
+						INT0_PEND <= '0;
+						INT1_PEND <= '0;
+						INT0_EN <= '0;
+						INT1_EN <= '0;
+					end
+					ADBIO_O <= '0;
+				end
 				CSTAT[4] <= 0;
 				FIFOINIT <= '0;
 				DSP_RST <= {1'b0,DSP_RST[1]};
