@@ -390,7 +390,12 @@ module MADAM
 			else if (A[7:0] >= 8'h40 && A[7:0] <= 8'h4F) REG_DO <= !MATH_BANK ? VECTOR0_DO : VECTOR1_DO;
 			else if (A[7:0] >= 8'h50 && A[7:0] <= 8'h5F) REG_DO <= VECTOR1_DO;
 			else if (A[7:0] >= 8'h60 && A[7:0] <= 8'h6F) REG_DO <= !MATH_BANK ? MATH_OUT0_DO : MATH_OUT1_DO;
-			else                                         REG_DO <= '0;
+			else
+				case ({A[7:2],2'b00})
+					8'h80:   REG_DO <= MATH_DIV_N[63:32];
+					8'h84:   REG_DO <= MATH_DIV_N[31: 0];
+					default: REG_DO <= '0;
+				endcase
 		else if (REG_MATH_SEL)
 			case ({A[3:2],2'b00})
 				4'h0,
