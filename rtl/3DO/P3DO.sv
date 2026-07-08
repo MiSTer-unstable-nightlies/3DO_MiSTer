@@ -10,7 +10,6 @@ module P3DO
 `endif
 (
 	input              CLK,
-	input              VCLK,
 	input              RST_N,
 	input              EN,
 	input              PAUSE,
@@ -74,9 +73,12 @@ module P3DO
 	
 	output             MCLK_CE,
 	
-	input      [31: 0] S,
-
 	input              VCE,
+	input      [31: 0] S,
+	
+	output             FIELD,
+
+	input              VCLK,
 	output     [23: 0] RGB,
 	output             HS_N,
 	output             VS_N,
@@ -88,6 +90,9 @@ module P3DO
 	output     [15: 0] AUDIOL,
 	output     [15: 0] AUDIOR,
 	
+	
+	input              HINTREPOL_DISABLE,
+	input              VINTREPOL_DISABLE,
 	input      [ 2: 0] SCRN_EN,
 	input      [ 7: 0] DBG_EXT
 	
@@ -304,6 +309,8 @@ module P3DO
 		
 		.SYSRAM_EN(MADAM_SYSRAM_EN),
 		
+		.FIELD(FIELD),
+		
 		.DBG_SPR_EN(SCRN_EN[1]),
 		.DBG_EXT(DBG_EXT)
 	);
@@ -386,6 +393,8 @@ module P3DO
 		.AUDIOL(CLIO_AUDIOL),
 		.AUDIOR(CLIO_AUDIOR),
 		
+		.HINTREPOL_DISABLE(HINTREPOL_DISABLE),
+		.VINTREPOL_DISABLE(VINTREPOL_DISABLE),
 		.DBG_EXT(DBG_EXT)
 	);
 	assign CLIO_DI = CPU_DBE ? CPU_DO : DI;

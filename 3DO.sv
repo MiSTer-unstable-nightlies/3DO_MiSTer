@@ -285,7 +285,7 @@ module emu
 	// 0         1         2         3          4         5         6   
 	// 01234567890123456789012345678901 23456789012345678901234567890123
 	// 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-	// X     XX    XXXXXXX              XXXXXXXX                        
+	// X     XX    XXXXXXXX             XXXXXXXX                        
 	
 	`include "build_id.v"
 	localparam CONF_STR = {
@@ -309,10 +309,16 @@ module emu
 		"P2O[34:32],Pad,1,2,3,4,Off;",
 		"D1P2O[35],Flightstick,Off,On;",
 		"D2P2O[36],Mouse,Off,On;",
-		"P2-;",
 		"P2O[38:37],Arcade control,Off,Trackball;",/*,LightGun*/
 		"P2O[39],Arcade service,Off,On;",
 		"P2-;",
+
+		"P3,Hardware;",
+		"P3OJ,Video mode,240p,480i(original);",
+
+		"P4,Debug;",
+		"P4OH,H Interpolation,Off,On;",
+		"P4OI,V Interpolation,Off,On;",
 		
 		"-;",
 		"R0,Reset;",
@@ -614,13 +620,12 @@ module emu
 	wire [15: 0] CDCRC;
 	
 	wire [31: 0] VRAM_SQ;
+	wire         P3DO_FIELD;
 	
 	wire [ 7: 0] R, G, B;
 	wire         HS_N,VS_N;
 	wire         DCLK;
 	wire         HBL_N, VBL_N;
-	wire         FIELD = 0;
-	wire         INTERLACE = 0;
 	
 	wire         MCLK_CE;
 
@@ -641,6 +646,7 @@ module emu
 		.CLK(clk_sys),
 		.RST_N(1),
 		.IN_CLK(in_clk),
+		.IN_CE(1),
 		.OUT_CLK(/*!PAL ?*/ 24545400 /*: 29500000*/),
 		.CE(VCE)
 	);
@@ -651,6 +657,7 @@ module emu
 		.CLK(clk_sys),
 		.RST_N(1),
 		.IN_CLK(in_clk),
+		.IN_CE(1),
 		.OUT_CLK(16934400),
 		.CE(ACLK_CE)
 	);
@@ -728,6 +735,8 @@ module emu
 		
 		.S(VRAM_SQ),
 		
+		.FIELD(P3DO_FIELD),
+		
 		.VCE(VCE),
 		.RGB({R,G,B}),
 		.HS_N(HS_N),
@@ -742,6 +751,8 @@ module emu
 		
 		.MCLK_CE(MCLK_CE),
 		
+		.HINTREPOL_DISABLE(~status[17]),
+		.VINTREPOL_DISABLE(~status[18]),
 		.SCRN_EN(SCRN_EN[2:0]),
 		.DBG_EXT(DBG_EXT)
 	);
@@ -1176,15 +1187,19 @@ module emu
 	wire [ 2: 0] scale = '0;//status[3:1];
 	reg          forced_scandoubler_sync;
 	reg  [ 2: 0] scale_sync;
+	
+	reg          INTERLACE,FIELD;
 	always @(posedge clk_vid) begin
 		forced_scandoubler_sync <= 0;//forced_scandoubler;
 		scale_sync <= scale;
+		INTERLACE <= status[19];
+		FIELD <= P3DO_FIELD;
 	end
 	wire [ 2: 0] sl = scale_sync;
 	
 	assign CLK_VIDEO = clk_vid;
 	assign VGA_SL = {~INTERLACE,~INTERLACE} & sl[1:0];
-	assign VGA_F1 = FIELD;
+	assign VGA_F1 = INTERLACE & FIELD;
 	
 	wire vga_de;
 	video_mixer #(.LINE_LENGTH(8), .HALF_DEPTH(0), .GAMMA(1)) video_mixer

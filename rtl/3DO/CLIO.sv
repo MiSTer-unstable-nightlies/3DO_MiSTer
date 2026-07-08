@@ -69,6 +69,8 @@ module CLIO
 	output     [15: 0] AUDIOL,
 	output     [15: 0] AUDIOR,
 	
+	input              HINTREPOL_DISABLE,
+	input              VINTREPOL_DISABLE,
 	input      [ 7: 0] DBG_EXT
 `ifdef DEBUG
 	                  ,
@@ -1461,6 +1463,8 @@ module CLIO
 		.AD(AD),
 		.DE(DE),
 		
+		.HINTREPOL_DISABLE(HINTREPOL_DISABLE),
+		.VINTREPOL_DISABLE(VINTREPOL_DISABLE),
 		.DBG_EXT(DBG_EXT)
 	);
 	

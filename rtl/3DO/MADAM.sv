@@ -77,6 +77,8 @@ module MADAM
 	
 	output             SYSRAM_EN,
 	
+	output             FIELD,
+	
 	input              DBG_SPR_EN,
 	input      [ 7: 0] DBG_EXT
 	
@@ -733,7 +735,9 @@ module MADAM
 		.VCE(VCE),
 		.PCSC(PCSC),
 		.LSC(SPORT_LSC),
-		.RSC(SPORT_RSC)
+		.RSC(SPORT_RSC),
+		
+		.FIELD(FIELD)
 	);
 	
 	MADAM_PLAYER PLAYER
