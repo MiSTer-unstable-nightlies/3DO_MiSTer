@@ -33,7 +33,10 @@ module MADAM_SPORT
 	input              VCE,
 	input              PCSC,
 	output             LSC,
-	output             RSC
+	output             RSC,
+	
+	output             FIELD,
+	output             V480
 	
 `ifdef DEBUG
 	                   ,
@@ -110,6 +113,8 @@ module MADAM_SPORT
 			endcase
 		end
 	end 
+	assign FIELD = FN;
+	assign V480 = CLUT_DMACTL.V480;
 	
 	//CLUT transfer
 	bit  [ 8: 0] LINE;
@@ -273,6 +278,9 @@ module MADAM_SPORT
 			if (VID_PREV_TRANS || VID_CURR_TRANS) begin
 				VIDMID_FIRST <= 1;
 				VIDMID_CURR <= VIDOUT_PFL;
+			end
+			if (BUS_STATE_FF == VID_MIDINIT1 && VIDMID_FIRST) begin
+				VIDMID_CURR <= ~VIDMID_CURR;
 			end
 			if (BUS_STATE_FF == VID_MIDPREV1 || BUS_STATE_FF == VID_MIDCURR1) begin
 				VIDMID_FIRST <= 0;
@@ -485,7 +493,7 @@ module MADAM_SPORT
 				AG_CTL.DMA_REG_READ_CTL = 2'h0;
 				AG_CTL.DMA_REG_WRITE_SEL = 0;
 				AG_CTL.DMA_REG_WRITE_CTL = 3'h4;
-				AG_CTL.DMA_REG_WRITE_EN = ~VIDOUT_PFL;
+				AG_CTL.DMA_REG_WRITE_EN = ~VIDOUT_PFL | CLUT_DMACTL.V480;
 				AG_CTL.DMA_ADDR_SEL = 1;
 				AG_CTL.DMA_ADDER_CTL = {1'b1,CLUT_DMACTL.DISPMODE};
 			end
@@ -525,7 +533,7 @@ module MADAM_SPORT
 				AG_CTL.DMA_REG_READ_CTL = 2'h1;
 				AG_CTL.DMA_REG_WRITE_SEL = 0;
 				AG_CTL.DMA_REG_WRITE_CTL = 3'h5;
-				AG_CTL.DMA_REG_WRITE_EN = VIDOUT_PFL;
+				AG_CTL.DMA_REG_WRITE_EN = VIDOUT_PFL | CLUT_DMACTL.V480;
 				AG_CTL.DMA_ADDR_SEL = 1;
 				AG_CTL.DMA_ADDER_CTL = {1'b1,CLUT_DMACTL.DISPMODE};
 			end

@@ -281,13 +281,14 @@ module MADAM_AG
 	bit         PFL/*,CFL*/;
 	bit         CF;
 	always @(posedge CLK or negedge RST_N) begin
-		bit         CURR1_LATCH,CURR_FATCHED;
+		bit         CURR1_LATCH,CURR_FETCHED;
+		bit         V480;
 		
 		if (!RST_N) begin
 			PFL <= 0;
 //			CFL <= 1;
 			CF <= 0;
-			CURR_FATCHED <= 0;
+			CURR_FETCHED <= 0;
 		end
 		else if (EN && CE_R) begin
 			case (BUS_STATE_FF)
@@ -301,18 +302,22 @@ module MADAM_AG
 					CF <= 0;
 				end
 				
+				CLUT_CTRL1: begin
+					V480 <= MDTI[19];
+				end
+				
 				CLUT_CURR1: begin
 					CURR1_LATCH <= MDTI[1];
-					CURR_FATCHED <= 1;
+					CURR_FETCHED <= 1;
 				end
 				
 				VID_PREINIT1: begin
-					if (CURR_FATCHED) PFL <= CURR1_LATCH;
+					if (CURR_FETCHED) PFL <= CURR1_LATCH & ~V480;
 				end
 				
 				VID_INIT1: begin
-					if (!CURR_FATCHED) PFL <= ~PFL;
-					CURR_FATCHED <= 0;
+					if (!CURR_FETCHED) PFL <= ~PFL & ~V480;
+					CURR_FETCHED <= 0;
 				end
 				
 				VID_CURR1: begin
