@@ -27,6 +27,8 @@ module CLIO_VIDEO
 	output     [23: 0] AD,
 	output             DE,
 	
+	input              HINTREPOL_DISABLE,
+	input              VINTREPOL_DISABLE,
 	input      [ 7: 0] DBG_EXT
 `ifdef DEBUG
                       ,
@@ -140,6 +142,7 @@ module CLIO_VIDEO
 			end
 		end
 	end 
+	wire FIRST_LINE = (VCOUNT == 9'd24);
 	
 	
 	bit          LSCAP_N;
@@ -199,15 +202,17 @@ module CLIO_VIDEO
 		end
 	end 
 	
-	wire LOAD = ~LSCAP_N & ~RSCAP_N;
 	bit  [ 9: 0] AMYCTL;
 	DispCtrl_t   DISPCTL;
 	always @(posedge CLK or negedge RST_N) begin
+		bit          LOAD;
+		
 		if (!RST_N) begin
 			AMYCTL <= '0;
 			DISPCTL <= '0;
 		end
 		else if (EN && VCE) begin
+			LOAD <= ~LSCAP_N & ~RSCAP_N;
 			if (LOAD && !CAPEND1_N) begin
 				if (!SCAP[30] && SCAP[31]) begin
 					AMYCTL <= SCAP[9:0];
@@ -385,6 +390,7 @@ module CLIO_VIDEO
 	bit          PDESTACKER_DE;
 	CLIO_24DESTACKER PDESTACKER(CLK, VCE, EN, READ_START, PDS_CLK1, PDS_CLK2, RGB, ~CAPEND7_N, LP0, LP1, LP2, LP3, PDESTACKER_DE);
 	
+	wire ION = ~FIRST_LINE;
 	bit  [23: 0] INTERPOL_OUT;
 	bit          INTERPOL_DE;
 	CLIO_INTERPOL INTERPOL
@@ -397,6 +403,11 @@ module CLIO_VIDEO
 		
 		.ACLK1(1'b0),
 		.ACLK2(1'b0),
+		
+		.HION(DISPCTL.HION & ION & ~HINTREPOL_DISABLE),
+		.VION(DISPCTL.VION & ION & ~VINTREPOL_DISABLE),
+		.SPH(DISPCTL.HSUB == 2'h1),
+		.SPV(DISPCTL.VSUB == 2'h1),
 		
 		.LP0(LP0),
 		.LP1(LP1),
