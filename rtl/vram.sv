@@ -41,7 +41,7 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 	wire         USE_INT_RAM2 = (A >= ({BRAM2_OFFS+0,16'h0000}>>2) && A <= ({BRAM2_OFFS+1,16'hFFFF}>>2)) && USE_BRAM;
 	wire         USE_INT_RAM1 = (A >= ({BRAM1_OFFS+0,16'h0000}>>2) && A <= ({BRAM1_OFFS+0,16'hBFFF}>>2)) || (A >= (20'hFC000>>2));
 
-	bit  [15: 0] MASK;
+//	bit  [15: 0] MASK;
 	bit  [15: 0] COLOR;
 	
 	bit  [ 8: 0] SR_WA;
@@ -57,7 +57,7 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 	bit          RT_EXEC;	//read transfer
 	bit          MWT_EXEC;	//masked write transfer
 	bit          FW_EXEC;	//flash write
-	bit          SIM;			//serial input mode
+//	bit          SIM;			//serial input mode
 	bit          SOM;			//serial output mode
 	bit          SPLIT;		//serial split transfer mode
 	bit          ISTE;
@@ -75,7 +75,7 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 			RT_REQ <= 0;
 			{FLASHWRITE,LOAD} <= '0;
 			{RT_EXEC,MWT_EXEC,FW_EXEC} <= '0;
-			SIM <= 0;
+//			SIM <= 0;
 			SOM <= 0;
 			SPLIT <= 0;
 			SREG_POS <= '0;
@@ -118,7 +118,7 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 					{MEM_ROW,MEM_COL} <= A_FF[17:0];
 					RT_EXEC <= 1;
 					RT_REQ <= 1;
-					SIM <= 0;
+//					SIM <= 0;
 					SOM <= 1;
 					SPLIT <= DSF1;
 					SREG_POS <= {A_FF[8:1],1'b0};
@@ -129,9 +129,9 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 				MWT_PEND <= 0;
 				MEM_ROW <= A_FF[17:9];
 //				MEM_COL <= A_FF[8:0];
-				MASK <= D_FF;
+//				MASK <= D_FF;
 				MWT_EXEC <= !SE_N;
-				SIM <= 1;
+//				SIM <= 1;
 				SOM <= 0;
 				SPLIT <= DSF1;
 				SREG_POS <= '0;
@@ -143,7 +143,7 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 				FLASHWRITE <= DSF1;
 				SPLIT <= 0;
 				SREG_POS <= '0;
-				MASK <= D_FF;
+//				MASK <= D_FF;
 			end
 			if (FW_PEND2) begin
 				FW_PEND2 <= 0;
@@ -153,7 +153,7 @@ module P3DO_VRAM #(parameter USE_BRAM = 0) (
 				end
 				if (FW_OE_N) begin
 					if (LOAD && DSF1) COLOR <= D_FF;
-					if (LOAD && !DSF1) MASK <= D_FF;
+//					if (LOAD && !DSF1) MASK <= D_FF;
 				end
 				FLASHWRITE <= 0;
 				LOAD <= 0;

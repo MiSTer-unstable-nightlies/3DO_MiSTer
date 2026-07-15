@@ -509,6 +509,7 @@ module MADAM_SE
 			if (SPRPAUS_WRITE && SPRPAUS_WRITE_OLD && !PAUSE) begin
 				SPRPAUS <= 1;
 			end
+			{SPRPRQ,SPREND} <= '0;//TODO
 			
 			//SCOB read
 			if (SCOBLD_REQ && (BUS_STATE_FF == SCOB_INIT1 || BUS_STATE_FF == SCOB_INIT3 || BUS_STATE_FF == SCOB_INIT5 || BUS_STATE_FF == SCOB_INIT7) && !BUS_PB/*ACK*/) begin
@@ -3184,11 +3185,10 @@ module MADAM_MATH_PLATFORM (
 		DRAW_REGIS
 	} DrawState_t;
 	
-	bit          CX_Z,CY_Z,CX_N,CY_N,CX_CLIP,CY_CLIP;
+	bit          CX_N,CY_N,CX_CLIP,CY_CLIP;
 	bit          LDX_Z,LDY_Z,LDX_N,LDY_N,LDX_ONE,LDY_ONE;
 	bit          DX_Z,DY_Z,DX_N,DY_N,DX_ONE,DY_ONE;
 	bit          DDX_Z,DDY_Z,DDX_N,DDY_N;
-	bit          DXa01_NMONE,DYa01_NMONE,DXa32_NMONE,DYa32_NMONE,DXa03_NMONE,DYa03_NMONE;
 	
 	
 	bit  [31: 0] Xa0,Xa1,Xa2,Xa3;
@@ -3198,7 +3198,7 @@ module MADAM_MATH_PLATFORM (
 
 	bit  [15: 0] X1,X2;
 	bit  [15: 0] X1F,X2F;
-	bit  [15: 0] DX1,DX2,DX1F,DY1F;
+	bit  [15: 0] DX1,DX2;
 	bit  [15: 0] Y;
 	bit  [15: 0] DY1,DY2;
 	
@@ -3207,7 +3207,6 @@ module MADAM_MATH_PLATFORM (
 	bit  [31: 0] Y_ADD01_A,Y_ADD01_B,Y_ADD01_RES;
 	bit  [31: 0] Y_ADD23_A,Y_ADD23_B,Y_ADD23_RES;
 	bit  [15: 0] MUNK_X1,MUNK_X2;
-	bit  [15: 0] MUNK_X1F,MUNK_X2F;
 	bit  [15: 0] MUNK_DY12_RES;
 	bit  [15: 0] TEMP_Y_T1,TEMP_T2;
 	always_comb begin
@@ -3293,16 +3292,16 @@ module MADAM_MATH_PLATFORM (
 		Y_ADD23_RES = CTL.Y_ADD23_SUB ? Y_ADD23_A - Y_ADD23_B : Y_ADD23_A + Y_ADD23_B;
 		
 		case (CTL.X1_MUNK_SEL)
-			2'd0: {MUNK_X1,MUNK_X1F} = Xa0;
-			2'd1: {MUNK_X1,MUNK_X1F} = Xa1;
-			2'd2: {MUNK_X1,MUNK_X1F} = Xa2;
-			2'd3: {MUNK_X1,MUNK_X1F} = Xa3;
+			2'd0: MUNK_X1 = Xa0[31:16];
+			2'd1: MUNK_X1 = Xa1[31:16];
+			2'd2: MUNK_X1 = Xa2[31:16];
+			2'd3: MUNK_X1 = Xa3[31:16];
 		endcase
 		case (CTL.X2_MUNK_SEL)
-			2'd0: {MUNK_X2,MUNK_X2F} = Xa0;
-			2'd1: {MUNK_X2,MUNK_X2F} = Xa1;
-			2'd2: {MUNK_X2,MUNK_X2F} = Xa2;
-			2'd3: {MUNK_X2,MUNK_X2F} = Xa3;
+			2'd0: MUNK_X2 = Xa0[31:16];
+			2'd1: MUNK_X2 = Xa1[31:16];
+			2'd2: MUNK_X2 = Xa2[31:16];
+			2'd3: MUNK_X2 = Xa3[31:16];
 		endcase
 		MUNK_DY12_RES = Ya2[31:16] - Ya1[31:16];
 		
@@ -3321,9 +3320,7 @@ module MADAM_MATH_PLATFORM (
 		endcase
 	end
 	
-	wire MUNK_CW  = (DX_Z & LDY_Z &  ((DY_N & ~LDX_Z & ~LDX_N) | (~DY_Z & ~DY_N & LDX_N))) | (DY_Z & LDX_Z &  ((DX_N & ~LDY_Z & ~LDY_N) | (~DX_Z & ~DX_N & LDY_N)));
-	wire MUNK_CCW = (DX_Z & LDY_Z & ~((DY_N & ~LDX_Z & ~LDX_N) | (~DY_Z & ~DY_N & LDX_N))) | (DY_Z & LDX_Z & ~((DX_N & ~LDY_Z & ~LDY_N) | (~DX_Z & ~DX_N & LDY_N)));
-	wire MUNK_FUNC = DDX_Z & DDY_Z & ((DX_Z & DY_ONE & LDY_Z & LDX_ONE) | (DX_ONE & DY_Z & LDX_Z & LDY_ONE) /*| (DXa01_NMONE & DYa01_NMONE & DXa32_NMONE & DYa32_NMONE & DXa03_NMONE & DYa03_NMONE)*/);
+	wire MUNK_FUNC = DDX_Z & DDY_Z & ((DX_Z & DY_ONE & LDY_Z & LDX_ONE) | (DX_ONE & DY_Z & LDX_Z & LDY_ONE));
 	wire LINE_CLIP = (CX_N    & (DX_Z |  DX_N) & (DDX_Z |  DDX_N) & (LDX_Z |  LDX_N /*| LSC*/)) | (CY_N    & (DY_Z |  DY_N) & (DDY_Z |  DDY_N) & (LDY_Z |  LDY_N /*| LSC*/)) | 
 	                 (CX_CLIP & (DX_Z | ~DX_N) & (DDX_Z | ~DDX_N) & (LDX_Z | ~LDX_N /*| LSC*/)) | (CY_CLIP & (DY_Z | ~DY_N) & (DDY_Z | ~DDY_N) & (LDY_Z | ~LDY_N /*| LSC*/));
 	wire REGION_CLIP = (Xa0[31] & Xa1[31] & Xa2[31] & Xa3[31]) | (Ya0[31] & Ya1[31] & Ya2[31] & Ya3[31]) |
@@ -3345,16 +3342,14 @@ module MADAM_MATH_PLATFORM (
 			if (CTL.A0CL_INIT) begin	//CX->Xa0,CY->Ya0
 				Xa0 <= {Xtemp,XS0};
 				Ya0 <= {Ytemp,YS0};
-				CX_Z <= ~|{Xtemp,XS0}; CX_N <= Xtemp[15]; CX_CLIP <= ~Xtemp[15] & Xtemp[14:0] > {3'b000,CLIPX}; 
-				CY_Z <= ~|{Ytemp,YS0}; CY_N <= Ytemp[15]; CY_CLIP <= ~Ytemp[15] & Ytemp[14:0] > {4'b0000,CLIPY}; 
+				CX_N <= Xtemp[15]; CX_CLIP <= ~Xtemp[15] & Xtemp[14:0] > {3'b000,CLIPX}; 
+				CY_N <= Ytemp[15]; CY_CLIP <= ~Ytemp[15] & Ytemp[14:0] > {4'b0000,CLIPY}; 
 			end
 			if (CTL.A3CL_INIT) begin	//Xa0+LDX->Xa3,Ya0+LDY->Ya3
 				Xa3 <= Xa0 + {Xtemp,XS0};
 				Ya3 <= Ya0 + {Ytemp,YS0};
 				LDX_Z <= ~|{Xtemp,XS0}; LDX_N <= Xtemp[15]; LDX_ONE <= (Xtemp == 16'h0001 | Xtemp == 16'hFFFF) & ~|XS0;
 				LDY_Z <= ~|{Ytemp,YS0}; LDY_N <= Ytemp[15]; LDY_ONE <= (Ytemp == 16'h0001 | Ytemp == 16'hFFFF) & ~|YS0;
-				DXa03_NMONE <= ({Xtemp,XS0} <= 32'h00010000 | {Xtemp,XS0} >= 32'hFFFF0000);
-				DYa03_NMONE <= ({Ytemp,YS0} <= 32'h00010000 | {Ytemp,YS0} >= 32'hFFFF0000);
 			end
 			if (CTL.A0DL_INIT) begin	//DX->DXa0,DY->DYa0
 				DXa0 <= {Xtemp,XS0};
@@ -3374,13 +3369,8 @@ module MADAM_MATH_PLATFORM (
 				Ya1 <= Ya0 + {{4{DYa0[31]}},DYa0[31:4]};
 				Xa2 <= Xa3 + {{4{DXa3[31]}},DXa3[31:4]};
 				Ya2 <= Ya3 + {{4{DYa3[31]}},DYa3[31:4]};
-				{DX1,DX1F} <= Xa3 - Xa0;
-				{DY1,DY1F} <= Ya3 - Ya0;
-				
-				DXa01_NMONE <= (DXa0 <= 32'h00100000 | DXa0 >= 32'hFFF00000);
-				DYa01_NMONE <= (DYa0 <= 32'h00100000 | DYa0 >= 32'hFFF00000);
-				DXa32_NMONE <= (DXa3 <= 32'h00100000 | DXa3 >= 32'hFFF00000);
-				DYa32_NMONE <= (DYa3 <= 32'h00100000 | DYa3 >= 32'hFFF00000);
+				DX1 <= Xa3[31:16] - Xa0[31:16];
+				DY1 <= Ya3[31:16] - Ya0[31:16];
 			end
 			if (CTL.A12C_CALC) begin	//
 				Xa0 <= Xa1;
@@ -3391,8 +3381,8 @@ module MADAM_MATH_PLATFORM (
 				Ya1 <= Ya1 + {{4{DYa0[31]}},DYa0[31:4]};
 				Xa2 <= Xa2 + {{4{DXa3[31]}},DXa3[31:4]};
 				Ya2 <= Ya2 + {{4{DYa3[31]}},DYa3[31:4]};
-				{DX1,DX1F} <= Xa2 - Xa1;
-				{DY1,DY1F} <= Ya2 - Ya1;
+				DX1 <= Xa2[31:16] - Xa1[31:16];
+				DY1 <= Ya2[31:16] - Ya1[31:16];
 				
 			end
 			
