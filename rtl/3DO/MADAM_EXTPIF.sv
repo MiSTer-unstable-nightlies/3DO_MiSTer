@@ -312,14 +312,14 @@ module MADAM_EXTPIF
 	
 	bit  [10: 0] HCOUNT;
 	bit  [ 9: 0] VCOUNT;
-	bit          VZ,VN,FN,FC,VR,VD,VL;
+	bit          /*VZ,VN,FN,*/FC/*,VR,VD*/,VL;
 	always @(posedge CLK or negedge RST_N) begin
 		bit  [ 3: 0] PCSC_OLD;
 		
 		if (!RST_N) begin
 			HCOUNT <= '0;
 			VCOUNT <= '0;
-			{VZ,VN,FN,FC,VR,VD,VL} <= '0;
+			{/*VZ,VN,FN,*/FC/*,VR,VD*/,VL} <= '0;
 			PCSC_OLD <= '0;
 		end
 		else if (EN && VCE) begin
@@ -338,12 +338,12 @@ module MADAM_EXTPIF
 			end
 			
 			case (HCOUNT)
-				11'd0: VZ <= PCSC;
-				11'd1: VN <= PCSC;
-				11'd2: FN <= PCSC;
+//				11'd0: VZ <= PCSC;
+//				11'd1: VN <= PCSC;
+//				11'd2: FN <= PCSC;
 				11'd3: FC <= PCSC;
-				11'd4: VR <= PCSC;
-				11'd5: VD <= PCSC;
+//				11'd4: VR <= PCSC;
+//				11'd5: VD <= PCSC;
 				11'd6: VL <= PCSC;
 			endcase
 		end

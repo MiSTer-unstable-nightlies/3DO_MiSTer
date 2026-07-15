@@ -155,7 +155,7 @@ module P3DO_CDROM
 	
 	bit  [ 7: 0] STATUS;
 	bit  [ 7: 0] ERROR;
-	bit  [ 7: 0] SPEED;
+//	bit  [ 7: 0] SPEED;
 	
 	bit  [ 7: 0] COMMAND[8];
 	wire [ 7: 0] CMD_CODE = COMMAND[0];
@@ -224,6 +224,7 @@ module P3DO_CDROM
 			NEXT_FRAME_CNT = FRAME_CNT + 16'd1;
 			
 			CDD_COMM_SEND <= 0;
+			HOST_COMM[7] <= '0;
 			
 			CDHRD_N_OLD <= CDHRD_N;
 			CDHWR_N_OLD <= CDHWR_N;
@@ -339,7 +340,7 @@ module P3DO_CDROM
 						
 						8'h09: begin
 							if (COMMAND[1] == 8'h03) begin //Set speed
-								SPEED <= COMMAND[3];
+//								SPEED <= COMMAND[3];
 							end
 							else if (COMMAND[1] == 8'h05) begin //Set volume
 								

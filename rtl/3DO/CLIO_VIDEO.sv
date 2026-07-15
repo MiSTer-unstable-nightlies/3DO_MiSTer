@@ -184,38 +184,32 @@ module CLIO_VIDEO
 	wire [31: 0] SCAP = {LSCAP_BUF,RSCAP_BUF};
 	
 	bit          CAPEND1_N,CAPEND2_N,CAPEND3_N,CAPEND4_N;
-	bit  [ 2: 0] PIPEREAD;
-	bit          READ;
 	always @(posedge CLK or negedge RST_N) begin		
 		if (!RST_N) begin
 			{CAPEND1_N,CAPEND2_N,CAPEND3_N,CAPEND4_N} <= '0;
-			PIPEREAD <= '0;
-			READ <= 0;
 		end
 		else if (EN && VCE) begin
 			CAPEND1_N <= CAPCLKEN_N;
 			CAPEND2_N <= CAPEND1_N;
 			CAPEND3_N <= CAPEND2_N;
 			CAPEND4_N <= CAPEND3_N;
-			
-			{READ,PIPEREAD} <= {PIPEREAD,READ_EN};
 		end
 	end 
 	
-	bit  [ 9: 0] AMYCTL;
+//	bit  [ 9: 0] AMYCTL;
 	DispCtrl_t   DISPCTL;
 	always @(posedge CLK or negedge RST_N) begin
 		bit          LOAD;
 		
 		if (!RST_N) begin
-			AMYCTL <= '0;
+//			AMYCTL <= '0;
 			DISPCTL <= '0;
 		end
 		else if (EN && VCE) begin
 			LOAD <= ~LSCAP_N & ~RSCAP_N;
 			if (LOAD && !CAPEND1_N) begin
 				if (!SCAP[30] && SCAP[31]) begin
-					AMYCTL <= SCAP[9:0];
+//					AMYCTL <= SCAP[9:0];
 				end
 				if (!SCAP[29] && SCAP[30] && SCAP[31]) begin
 					DISPCTL <= SCAP[28:0];
